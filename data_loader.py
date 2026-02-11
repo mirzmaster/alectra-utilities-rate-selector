@@ -45,7 +45,7 @@ def load_single_file(filepath):
         filepath: Path to Excel file
 
     Returns:
-        DataFrame with columns: datetime, kwh
+        DataFrame with columns: datetime, kwh, actual_cost
     """
     # extract date from file content
     file_date = extract_date_from_file(filepath)
@@ -56,21 +56,22 @@ def load_single_file(filepath):
     # read Excel file, skipping metadata rows
     df = pd.read_excel(filepath, skiprows=4)
 
-    # extract time and kWh columns
+    # extract time, kWh, and cost columns
     df = df.rename(columns={
         'Time': 'time',
-        'Units Consumed (kWh)': 'kwh'
+        'Units Consumed (kWh)': 'kwh',
+        'Cost($)': 'actual_cost'
     })
 
-    # keep only time and kwh columns
-    df = df[['time', 'kwh']].copy()
+    # keep only time, kwh, and actual_cost columns
+    df = df[['time', 'kwh', 'actual_cost']].copy()
 
     # parse time and create full datetime
     df.loc[:, 'hour'] = df['time'].apply(lambda x: int(x.split(':')[0]) if isinstance(x, str) else 0)
     df.loc[:, 'datetime'] = df['hour'].apply(lambda h: datetime.combine(file_date, datetime.min.time()) + timedelta(hours=h))
 
     # return final dataframe
-    result = df[['datetime', 'kwh']].copy()
+    result = df[['datetime', 'kwh', 'actual_cost']].copy()
 
     return result
 

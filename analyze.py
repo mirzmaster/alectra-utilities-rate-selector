@@ -11,6 +11,7 @@ from data_loader import load_all_files
 from data_aggregator import aggregate_hourly_data, save_aggregated_data
 from usage_analyzer import add_time_metadata, analyze_patterns
 from rate_calculator import calculate_all_plans, determine_optimal_plan
+from cost_validator import calculate_actual_cost, validate_estimates
 from report_generator import generate_report
 
 
@@ -74,10 +75,23 @@ def main():
         print(f"✗ Error calculating costs: {e}")
         sys.exit(1)
 
-    # step 5: generate report
-    print("Step 5: Generating report...")
+    # step 5: validate cost estimates
+    print("Step 5: Validating cost estimates...")
     try:
-        report_path = generate_report(analysis, results, identifier, enriched_df)
+        actual_data = calculate_actual_cost(enriched_df)
+        validation = validate_estimates(actual_data, results, analysis['num_days'])
+
+        print(f"✓ Actual cost for {actual_data['period_days']} days: ${actual_data['total_actual_cost']:.2f}")
+        print(f"✓ Projected monthly actual: ${actual_data['projected_monthly_actual']:.2f}")
+        print(f"✓ Closest match: {validation['closest_plan']} ({validation['accuracy_percentage']:.1f}% accuracy)\n")
+    except Exception as e:
+        print(f"✗ Error validating costs: {e}")
+        sys.exit(1)
+
+    # step 6: generate report
+    print("Step 6: Generating report...")
+    try:
+        report_path = generate_report(analysis, results, identifier, enriched_df, validation)
         print(f"✓ Report generated: {report_path}\n")
     except Exception as e:
         print(f"✗ Error generating report: {e}")

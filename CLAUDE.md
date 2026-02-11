@@ -11,9 +11,11 @@ A project to evaluate electricity usage by a residential household and select th
 
 ## Data aggregation and analysis
 - hourly data is provided with one file per day, broken down by hour
-- each raw data file includes cost information as well which is not relevant to the recommendation
+- each raw data file includes cost information which is extracted and used as validation baseline
 - aggregated data should take the hourly consumption from all the raw files, with rows per hour, and columns per day
 - usage patterns should differentiate between weekdays and weekends
+- estimated costs for each plan should be compared against actual costs
+- validation results should be included in the report to ensure accuracy of calculations
 
 ## Conventions
 - *Always* use a python venv for python script
@@ -23,6 +25,7 @@ A project to evaluate electricity usage by a residential household and select th
 - each command created should be documented in this CLAUDE.md file in the "Commands" section
 - maintain a succint README.md file with project information, project structure, and commands
 - README should contain an example for each command
+- commits should be granular and independently reasoned about, making it easy to understand the purpose of each change
 
 ## Commands
 

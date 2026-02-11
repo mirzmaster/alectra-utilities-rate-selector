@@ -27,3 +27,4 @@ Thumbs.db
 # sensitive data
 *.env
 .env
+data/

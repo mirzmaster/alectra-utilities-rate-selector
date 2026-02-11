@@ -5,7 +5,7 @@ from datetime import datetime
 from jinja2 import Template
 
 
-def generate_insights(analysis, results, optimal_plan):
+def generate_insights(analysis, results, optimal_plan, validation=None):
     """
     Generate insights based on usage patterns.
 
@@ -13,6 +13,7 @@ def generate_insights(analysis, results, optimal_plan):
         analysis: Usage statistics
         results: Cost results for all plans
         optimal_plan: Name of optimal plan
+        validation: Cost validation results (optional)
 
     Returns:
         str: HTML formatted insights
@@ -66,10 +67,20 @@ def generate_insights(analysis, results, optimal_plan):
     else:
         insights.append(f"<li>Switching to {optimal_plan} provides clear cost savings of ${sorted_costs[-1][1] - sorted_costs[0][1]:.2f}/month compared to the most expensive option.</li>")
 
+    # validation insights
+    if validation:
+        accuracy = validation['accuracy_percentage']
+        if accuracy >= 95:
+            insights.append(f"<li>Cost estimates are highly accurate ({accuracy:.1f}% match with actual billing data).</li>")
+        elif accuracy >= 90:
+            insights.append(f"<li>Cost estimates show good accuracy ({accuracy:.1f}% match with actual billing data).</li>")
+        else:
+            insights.append(f"<li>Cost estimates show some deviation from actual billing data ({accuracy:.1f}% match). This may be due to additional fees or rate changes.</li>")
+
     return '\n'.join(insights)
 
 
-def generate_report(analysis, results, identifier, enriched_df):
+def generate_report(analysis, results, identifier, enriched_df, validation=None):
     """
     Generate HTML report.
 
@@ -78,6 +89,7 @@ def generate_report(analysis, results, identifier, enriched_df):
         results: Cost results for all plans
         identifier: Dataset identifier
         enriched_df: DataFrame with time metadata
+        validation: Cost validation results (optional)
 
     Returns:
         str: Path to generated report
@@ -101,7 +113,7 @@ def generate_report(analysis, results, identifier, enriched_df):
     end_date = enriched_df['datetime'].max().strftime('%B %d, %Y')
 
     # generate insights
-    insights = generate_insights(analysis, results, optimal_plan)
+    insights = generate_insights(analysis, results, optimal_plan, validation)
 
     # load template
     template_path = './templates/report_template.html'
@@ -120,6 +132,7 @@ def generate_report(analysis, results, identifier, enriched_df):
         start_date=start_date,
         end_date=end_date,
         insights=insights,
+        validation=validation,
         report_date=datetime.now().strftime('%B %d, %Y at %I:%M %p')
     )
 

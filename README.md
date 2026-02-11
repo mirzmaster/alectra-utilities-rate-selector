@@ -16,6 +16,7 @@ this tool evaluates residential electricity consumption patterns and compares co
 ./data/<identifier>/        raw hourly usage data (Excel files)
 ./output/data/             aggregated data (CSV)
 ./output/report/           HTML analysis reports
+./plans/                   rate plan reference images
 ./templates/               HTML report template
 .venv/                     python virtual environment
 requirements.txt           python dependencies
@@ -24,6 +25,7 @@ data_loader.py            Excel file parser
 data_aggregator.py        data aggregation module
 usage_analyzer.py         usage pattern analysis
 rate_calculator.py        cost calculation for all plans
+cost_validator.py         cost validation against actuals
 rate_plans.py             rate definitions and pricing rules
 report_generator.py       HTML report generator
 ```
@@ -37,6 +39,46 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
+
+## Data Preparation
+
+before running the analysis, you need to prepare your electricity usage data:
+
+### 1. download hourly usage data
+
+1. visit the [Alectra Utilities Portal](https://myalectra.alectrautilities.com/portal/#/Usages)
+2. navigate to the Usage Overview page
+3. download your **hourly usage data** (not daily or monthly)
+4. download multiple days of data for more accurate analysis (recommended: 21+ days)
+
+### 2. organize data files
+
+create a subfolder under `data/` with an identifier of your choice:
+
+```bash
+mkdir -p data/<identifier>
+```
+
+place all downloaded Excel files in this directory:
+
+```bash
+data/
+└── <identifier>/
+    ├── Usage_9541175022.xlsx
+    ├── Usage_9541175022(1).xlsx
+    ├── Usage_9541175022(2).xlsx
+    └── ...
+```
+
+### 3. verify rate structures
+
+ensure the rates in `rate_plans.py` are current:
+
+1. check [Alectra Utilities rates page](https://www.alectrautilities.com/residential-rates) for the latest pricing
+2. update `rate_plans.py` if rates have changed
+3. rate structures may change seasonally or annually
+
+**note:** outdated rates will result in inaccurate cost projections.
 
 ## Usage
 
@@ -57,7 +99,8 @@ this will:
 2. aggregate hourly consumption data
 3. analyze usage patterns (weekday vs weekend, peak vs off-peak)
 4. calculate projected monthly costs for all three rate plans
-5. generate an HTML report with recommendations
+5. validate estimates against actual billing data
+6. generate an HTML report with recommendations
 
 **outputs:**
 - `./output/data/test_aggregated.csv` - hourly consumption matrix (24 hours × days)
@@ -95,6 +138,8 @@ the generated HTML report includes:
 - total and average consumption statistics
 - weekday vs weekend usage breakdown
 - detailed cost breakdown by pricing period
+- cost validation comparing estimates against actual billing data
+- identification of current rate plan based on actual costs
 - usage pattern insights and recommendations
 
 ## Requirements

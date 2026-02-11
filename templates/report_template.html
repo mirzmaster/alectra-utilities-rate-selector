@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electricity Rate Analysis Report - {{ identifier }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+        .recommendation {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .recommendation h3 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+        }
+        .recommendation .plan-name {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #1b5e20;
+        }
+        .recommendation .savings {
+            color: #2e7d32;
+            font-size: 1.1em;
+            margin-top: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+        tr:hover {
+            background: #f5f5f5;
+        }
+        .best-plan {
+            background: #e8f5e9 !important;
+            font-weight: bold;
+        }
+        .metric {
+            display: inline-block;
+            background: #ecf0f1;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 4px;
+        }
+        .metric-label {
+            font-size: 0.85em;
+            color: #7f8c8d;
+            display: block;
+        }
+        .metric-value {
+            font-size: 1.3em;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+        .breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .breakdown-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #3498db;
+        }
+        .breakdown-card h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .breakdown-item:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            margin-top: 5px;
+            padding-top: 10px;
+        }
+        .insights {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .insights h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        .insights ul {
+            margin-left: 20px;
+        }
+        .insights li {
+            margin: 8px 0;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Electricity Rate Analysis Report</h1>
+        <p>Analysis Period: {{ analysis.num_days }} days ({{ start_date }} to {{ end_date }})</p>
+
+        <div class="recommendation">
+            <h3>Recommended Rate Plan</h3>
+            <div class="plan-name">{{ optimal_plan }}</div>
+            <div class="savings">
+                Projected monthly cost: ${{ "%.2f"|format(results[optimal_plan.lower()].total_cost) }}
+                {% if savings > 0 %}
+                <br>Save ${{ "%.2f"|format(savings) }}/month compared to the most expensive plan
+                {% endif %}
+            </div>
+        </div>
+
+        <h2>Usage Summary</h2>
+        <div>
+            <span class="metric">
+                <span class="metric-label">Total Consumption</span>
+                <span class="metric-value">{{ "%.1f"|format(analysis.total_kwh) }} kWh</span>
+            </span>
+            <span class="metric">
+                <span class="metric-label">Average Daily</span>
+                <span class="metric-value">{{ "%.1f"|format(analysis.avg_daily_kwh) }} kWh</span>
+            </span>
+            <span class="metric">
+                <span class="metric-label">Projected Monthly</span>
+                <span class="metric-value">{{ "%.1f"|format(analysis.monthly_kwh_projected) }} kWh</span>
+            </span>
+        </div>
+
+        <h2>Rate Plan Comparison</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Rate Plan</th>
+                    <th>Projected Monthly kWh</th>
+                    <th>Projected Monthly Cost</th>
+                    <th>Difference from Best</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for plan_key, plan_data in results.items() %}
+                <tr class="{% if plan_data.plan == optimal_plan %}best-plan{% endif %}">
+                    <td>{{ plan_data.plan }}</td>
+                    <td>{{ "%.1f"|format(plan_data.monthly_kwh) }} kWh</td>
+                    <td>${{ "%.2f"|format(plan_data.total_cost) }}</td>
+                    <td>
+                        {% if plan_data.plan == optimal_plan %}
+                        Best Choice
+                        {% else %}
+                        +${{ "%.2f"|format(plan_data.total_cost - results[optimal_plan.lower()].total_cost) }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2>Detailed Cost Breakdown</h2>
+        <div class="breakdown">
+            <div class="breakdown-card">
+                <h4>Tiered Rate Plan</h4>
+                <div class="breakdown-item">
+                    <span>Tier 1 (up to 1,000 kWh @ $0.120/kWh)</span>
+                    <span>${{ "%.2f"|format(results.tiered.tier1_cost) }}</span>
+                </div>
+                <div class="breakdown-item">
+                    <span>Tier 2 (over 1,000 kWh @ $0.142/kWh)</span>
+                    <span>${{ "%.2f"|format(results.tiered.tier2_cost) }}</span>
+                </div>
+                <div class="breakdown-item">
+                    <span>Total Monthly Cost</span>
+                    <span>${{ "%.2f"|format(results.tiered.total_cost) }}</span>
+                </div>
+            </div>
+
+            <div class="breakdown-card">
+                <h4>Time-of-Use (TOU) Plan</h4>
+                <div class="breakdown-item">
+                    <span>Off-Peak ({{ "%.1f"|format(results.tou.off_peak_kwh) }} kWh @ $0.098/kWh)</span>
+                    <span>${{ "%.2f"|format(results.tou.off_peak_cost) }}</span>
+                </div>
+                <div class="breakdown-item">
+                    <span>Mid-Peak ({{ "%.1f"|format(results.tou.mid_peak_kwh) }} kWh @ $0.157/kWh)</span>
+                    <span>${{ "%.2f"|format(results.tou.mid_peak_cost) }}</span>
+                </div>
+                <div class="breakdown-item">
+                    <span>On-Peak ({{ "%.1f"|format(results.tou.on_peak_kwh) }} kWh @ $0.203/kWh)</span>
+                    <span>${{ "%.2f"|format(results.tou.on_peak_cost) }}</span>
+                </div>
+                <div class="breakdown-item">
+                    <span>Total Monthly Cost</span>
+                    <span>${{ "%.2f"|format(results.tou.total_cost) }}</span>
+                </div>
+            </div>
+
+            <div class="breakdown-card">
+                <h4>Ultra-Low Overnight (ULO) Plan</h4>
+                <div class="breakdown-item">
+                    <span>Ultra-Low ({{ "%.1f"|format(results.ulo.ultra_low_kwh) }} kWh @ $0.039/kWh)</span>
+                    <span>${{ "%.2f"|format(results.ulo.ultra_low_cost) }}</span>
+                </div>
+                <div class="breakdown-item">
+                    <span>Off-Peak ({{ "%.1f"|format(results.ulo.off_peak_kwh) }} kWh @ $0.098/kWh)</span>
+                    <span>${{ "%.2f"|format(results.ulo.off_peak_cost) }}</span>
+                </div>
+                <div class="breakdown-item">
+                    <span>Mid-Peak ({{ "%.1f"|format(results.ulo.mid_peak_kwh) }} kWh @ $0.157/kWh)</span>
+                    <span>${{ "%.2f"|format(results.ulo.mid_peak_cost) }}</span>
+                </div>
+                <div class="breakdown-item">
+                    <span>On-Peak ({{ "%.1f"|format(results.ulo.on_peak_kwh) }} kWh @ $0.391/kWh)</span>
+                    <span>${{ "%.2f"|format(results.ulo.on_peak_cost) }}</span>
+                </div>
+                <div class="breakdown-item">
+                    <span>Total Monthly Cost</span>
+                    <span>${{ "%.2f"|format(results.ulo.total_cost) }}</span>
+                </div>
+            </div>
+        </div>
+
+        <h2>Usage Patterns</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Pattern</th>
+                    <th>Consumption</th>
+                    <th>Percentage</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Weekday Usage ({{ analysis.num_weekdays }} days)</td>
+                    <td>{{ "%.1f"|format(analysis.weekday_kwh) }} kWh</td>
+                    <td>{{ "%.1f"|format(analysis.weekday_kwh / analysis.total_kwh * 100) }}%</td>
+                </tr>
+                <tr>
+                    <td>Weekend Usage ({{ analysis.num_weekends }} days)</td>
+                    <td>{{ "%.1f"|format(analysis.weekend_kwh) }} kWh</td>
+                    <td>{{ "%.1f"|format(analysis.weekend_kwh / analysis.total_kwh * 100) }}%</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="insights">
+            <h3>Insights and Recommendations</h3>
+            <ul>
+                {{ insights|safe }}
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p>Report generated on {{ report_date }}</p>
+            <p>Monthly costs are projected based on {{ analysis.num_days }}-day usage pattern.</p>
+            <p>Actual costs may vary based on seasonal changes and usage patterns.</p>
+        </div>
+    </div>
+</body>
+</html>

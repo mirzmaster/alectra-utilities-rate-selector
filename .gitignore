@@ -1,0 +1,29 @@
+# python virtual environment
+.venv/
+venv/
+env/
+
+# python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# output files
+output/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# sensitive data
+*.env
+.env
